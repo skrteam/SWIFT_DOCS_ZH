@@ -1,0 +1,12 @@
+{
+    "title": "TheSwiftRuntime",
+    "description": "This document describes the ABI interface to the Swift runtime",
+    "language": "zh",
+    "license": "cc by nc sa 4.0",
+    "author": "fanqi",
+    "x_proofread": "",
+    "x_origin_author": "jckarter",
+    "x_origin_url": "https://github.com/apple/swift/blob/master/docs/Runtime.md",
+    "x_origin_ctime": "22 Dec 2015",
+    "structure.glossary": "GLOSSARY.md"
+  }
