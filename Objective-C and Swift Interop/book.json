@@ -1,0 +1,12 @@
+{
+    "title": "TheSwiftRuntime",
+    "description": "This document describes how Swift interoperates with Objective-C code and the Objective-C runtime.",
+    "language": "zh",
+    "license": "cc by nc sa 4.0",
+    "author": "haitao",
+    "x_proofread": "",
+    "x_origin_author": "mikeash",
+    "x_origin_url": "https://github.com/apple/swift/blob/master/docs/ObjCInterop.md",
+    "x_origin_ctime": "22 Dec 2015",
+    "structure.glossary": "GLOSSARY.md"
+  }
