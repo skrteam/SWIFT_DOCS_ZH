@@ -5,11 +5,11 @@
 本文介绍了Swift runtime的ABI接口，接口为Swift程序提供的核心功能如下：
 
 * 内存管理，包括内存分配和引用计数
-* runtime的类型系统，包括动态类型转换、泛型实例化、协议 conformance registration
+* runtime的类型系统，包括动态类型转换、泛型实例化、协议 conformance 注册
 
 本文只是介绍编译器生成代码应该遵守的runtime接口协议，而不会详细描述内部实现细节。
 
-runtime接口目前work-in-progress，Swift 3的目标之一是使ABI接口稳定。本文目的是介绍runtime接口的当前状态以及稳定后的状态。在稳定前还需要修改的ABI接口会以**ABI TODO**标记。只存在于使用ObjC交互的[Darwin平台](https://github.com/apple/darwin-xnu)的Entry points和标明只与ObjC交互有关的信息，会以**ObjC-only**标记。
+Swift 3的目标之一是让当前work-in-progress的接口稳定下来。本文目的是介绍runtime接口的当前状态以及稳定后的状态。**ABI TODO**用来标记在稳定前还需要修改的runtime接口。以下两种情况会用**ObjC-only**标记，仅存在于使用ObjC交互的[Darwin平台](https://github.com/apple/darwin-xnu)的Entry points和仅与ObjC交互有关的信息。
 
 ## 已废弃的Entry points
 
@@ -51,7 +51,7 @@ runtime接口目前work-in-progress，Swift 3的目标之一是使ABI接口稳�
 
 输入Swift mangled的符号名会返回demangled name，比如，输入指针指向是一个带有`length`属性的字符串，返回会是`Swift.String`。
 
-**ABI TODO**：从标准库`Swift.String`的具体实现中解耦，并且去掉stdlib重新命名。
+**ABI TODO**：从标准库`Swift.String`的具体实现中解耦，并用非stdlib标准库的命名格式进行重命名。
 
 ## 内存分配
 
@@ -223,7 +223,7 @@ runtime接口目前work-in-progress，Swift 3的目标之一是使ABI接口稳�
 `ErrorType`是已经存在的类型，它是一种特殊的单字和引用计数表示方法。
 
  
-**ObjC-only**：`ErrorType`存在于runtime内部的，目的是桥接 `NSError` 和 `CFError`的实现。在没有ObjC的平台是不需要这种桥接的，并且错误对象接口可能很容易出问题（more fragile）。
+**ObjC-only**：`ErrorType`存在于runtime内部的，目的是桥接 `NSError` 和 `CFError`的实现。在non-Objc的平台上不需要桥接，并且错误对象接口可能很容易出问题（more fragile）。
 
  
 为了保持对ErrorType表示方法的封装，并且允许未来对表示方法优化。runtime为allocating、 projecting reference counting error values 提供了特殊的 entry points。
@@ -254,8 +254,7 @@ runtime接口目前work-in-progress，Swift 3的目标之一是使ABI接口稳�
 @convention(thin) (Builtin.RawPointer, @convention(thin) () -> ()) -> ()
 ```
  
-用于懒加载全局变量。第一个形参需要指向占用一个字长内存地址，这块地址会在进程启动时被初始化为零。在进程的生命周期中，如果对上述提到的地址做以下操作会被认为是未定义行为，被非零值初始化、被除swift_once以外的方法写入过。第二个参形参是一个函数引用，会在进程启动到函数返回间仅运行一次。
-
+`swift-once`用于懒加载全局变量。第一个形参需要指向占用一个字长内存地址，这块地址会在进程启动时被初始化为0。若该内存没有被初始化为0就对其进行引用，则程序行为是未定义的。若在进程的生命周期内对该内存数据的写入不是通过swift_once，对其进行引用访问，其程序行为也是未知的。在进程开始到函数返回的期间，作为第二个参数传入的函数必然且仅运行一次。
 ## 动态类型转换
 ```
 
@@ -310,7 +309,7 @@ runtime接口目前work-in-progress，Swift 3的目标之一是使ABI接口稳�
 
 #### ObjC-only.
 
-**ABI TODO**: 会尽量从rumtime中解耦出来，现在这些都可以在标准库中实现。
+**ABI TODO**: 会尽量从runtime中解耦出来，现在这些都可以在标准库中实现。
 
 ```
 0000000000003c80 T _swift_bridgeNonVerbatimFromObjectiveCConditional
@@ -341,7 +340,7 @@ runtime会在代码体积优化的过程中确认公共代码路径。
 
 这些函数查找可能需要在runtime中实例化或初始化的类型的元数据，包括结构化类型、泛型、类和导入的C和Objective-C类型的元数据。
 
-**ABI TODO**: 持续变化中的实例化APIs是弹性工作的一部分。对于标明类型（nominal types），`getGenericMetadata`可能成为实现细节来执行可复原成原类型的元数据的访问函数（resilient per-type metadata accessor functions）。
+**ABI TODO**: 实例化API是弹性（resilience）相关工作的一部分，还在持续变化。对于具名类型，getGenericMetadata可能会用了该实现弹性的per-type元数据访问器（resilient per-type metadata accessor functions）。
 
 ```
 0000000000023230 T _swift_getExistentialMetatypeMetadata
@@ -375,11 +374,11 @@ runtime会在代码体积优化的过程中确认公共代码路径。
 0000000000028bc0 T _swift_getInitializedObjCClass
 ```
 
-**ABI TODO**:`getExistential*TypeMetadata1-3`是快捷入口函数，Any和AnyObject的静态元数据也可能值得思考。
+**ABI TODO**:需为`getExistential*TypeMetadata1-3`添加快速入口函数。还有Any和AnyObject的静态元数据，也可以考虑。
 
 ## 类型元数据初始化
 
-Runtime在实例化类型元数据的时候会调用下面的入口函数。
+Runtime在实例化类型元数据的时候会调用以下Entry points。
 
 **ABI TODO**: 持续变化中的实例化APIs是弹性工作的一部分
 
@@ -430,7 +429,7 @@ Runtime在实例化类型元数据的时候会调用下面的入口函数。
 
 **ABI TODO**:使用形容词来替换名词的命名规则
 
-## 协议一致性查找
+## 协议 conformance 查找
 ```
 0000000000002ef0 T _swift_registerProtocolConformances
 
@@ -445,7 +444,7 @@ Runtime在实例化类型元数据的时候会调用下面的入口函数。
 ```
 ## 标准元数据
 
-Swift rumtime可以把标准元数据对象导出成`Builtin` 类型和标准的standard value witness tables ，这些可以被具有通用内存布局属性的类型自由使用。注意，不同于公共类型，runtime不能保证`Builtin`类型和元数据对象是一一对应的，同时runtime会在遇到有相同内存布局特性的`Builtin`类型时重用元数据对象。
+Swift runtime可以把标准元数据对象导出成`Builtin` 类型和标准的standard value witness tables ，后者可以很好地采用到具有通用内存布局属性的类型上。注意，不同于公共类型，runtime不能保证`Builtin`类型和元数据对象是一一对应的，同时runtime会在遇到有相同内存布局特性的`Builtin`类型时重用元数据对象。
 
 ```
 000000000004faa8 S __TMBB
