@@ -220,7 +220,7 @@ Swift 3的目标之一是让当前work-in-progress的接口稳定下来。本文
 
 ## Error对象
 
-`ErrorType`是已经存在的类型，它是一种特殊的单字和引用计数表示方法。
+`ErrorType`是已经存在的类型，它是一种特殊的single-word和引用计数表示方法。
 
  
 **ObjC-only**：`ErrorType`存在于runtime内部的，目的是桥接 `NSError` 和 `CFError`的实现。在non-Objc的平台上不需要桥接，并且错误对象接口可能很容易出问题（more fragile）。
