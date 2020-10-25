@@ -1,0 +1,12 @@
+{
+    "title": "Type Metadata",
+    "description": "Describes the fields, values, and layout of metadata records, which can be used (by reflection and debugger tools) to discover information about types.",
+    "language": "zh",
+    "license": "cc by nc sa 4.0",
+    "author": "guoyuan",
+    "x_proofread": "",
+    "x_origin_author": "augusto2112",
+    "x_origin_url": "https://github.com/apple/swift/blob/a353176e1eb570a56809cf4202f5f30aa8905840/docs/ABI/TypeMetadata.rst",
+    "x_origin_ctime": "17 Jun 2020",
+    "structure.glossary": "GLOSSARY.md"
+  }
